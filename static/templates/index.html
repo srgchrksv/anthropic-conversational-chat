@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Anthropic Chat UI</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #000000;
+      }
+
+      .chat-container {
+        width: 800px;
+        background-color: #313131;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+      }
+
+      .chat-input {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #ffffff;
+      }
+
+      .chat-input input {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 3px;
+        outline: none;
+      }
+
+      .chat-input button {
+        margin-left: 10px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 3px;
+        background-color: #ffffff;
+        color: #000000;
+        cursor: pointer;
+      }
+
+      .user {
+        font-weight: bold;
+        color: rgb(255, 255, 255);
+      }
+
+      .assistant {
+        font-weight: bold;
+        color: rgb(3, 122, 49);
+        text-shadow: #fff;
+      }
+    </style>
+    <link href="static/prism.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="static/prism.js"></script>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="chat-messages" id="chatMessages">
+        <div id="conversation"></div>
+      </div>
+      <form action="" id="prompt-form" class="chat-input">
+        <input type="text" id="prompt-input" placeholder="Enter your prompt" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+    <script>
+      marked.setOptions({
+        highlight: function (code, lang) {
+          if (Prism.languages[lang]) {
+            return Prism.highlight(code, Prism.languages[lang], lang);
+          } else {
+            return code;
+          }
+        },
+      });
+
+      const form = document.getElementById("prompt-form");
+      const promptInput = document.getElementById("prompt-input");
+      const conversation = document.getElementById("conversation");
+      
+      getHistory()
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault(); // Prevent form submission
+        const prompt = promptInput.value;
+        renderPrompt(prompt);
+        promptInput.value = ""; // Clear the input field
+
+        // Make an HTTP request
+        fetch("/api/prompt", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt: prompt }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const response = data.response;
+            renderResponse(response);
+            Prism.highlightAll();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      });
+
+      function renderPrompt(prompt) {
+        conversation.innerHTML +=
+          '<div><span class="user">User: </span>' + prompt + "</div>";
+      }
+
+      function renderResponse(response) {
+        conversation.innerHTML +=
+          '<div><span class="assistant">Assistant: </span>' +
+          marked.parse(response) +
+          "</div>";
+      }
+
+      
+      function getHistory() {
+        fetch("/api/history", {
+          method: "GET",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const response = data.response;
+            if ( response.lenght == 0){
+              return
+            }
+            response.forEach((e) => {
+              const text = e.content[0].text;
+              e.role == "user"? renderPrompt(text) : renderResponse(text);
+            });
+            Prism.highlightAll();
+          });
+      }
+    
+    </script>
+  </body>
+</html>
