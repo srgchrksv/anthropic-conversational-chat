@@ -20,14 +20,7 @@ class MessagesHistory:
         self.messages = []
 
     def append_message(self, role, message):
-        self.messages.append(self.message_template(role, message))
-
-    def get_messages(self):
-        return self.messages
-
-    @staticmethod
-    def message_template(role, message):
-        return {
+        self.messages.append({
             "role": role,
             "content": [
                 {
@@ -35,8 +28,11 @@ class MessagesHistory:
                     "text": message
                 }
             ]
-        }
-     
+        })
+
+    def get_messages(self):
+        return self.messages
+
 # init fastapi and chat historu
 app = FastAPI()
 messagesHistory  = MessagesHistory()

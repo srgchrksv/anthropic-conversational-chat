@@ -23,7 +23,15 @@ class MessagesHistory:
         self.messages = []
 
     def append_message(self, role, message):
-        self.messages.append(self.message_template(role, message))
+        self.messages.append({
+            "role": role,
+            "content": [
+                {
+                    "type": "text",
+                    "text": message
+                }
+            ]
+        })
 
     def get_messages(self):
         return self.messages
